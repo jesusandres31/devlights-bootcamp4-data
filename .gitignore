@@ -1,2 +1,4 @@
 pgdata/
 **/pgdata/
+metabase-data/
+**/metabase-data/

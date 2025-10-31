@@ -2,7 +2,7 @@ Paso 1: Construir la imagen
 docker build -t mi-postgres:1.0 .
 
 Paso 2: Ejecutar el contenedor
-docker run -d --name postgres-container -p 5432:5432 mi-postgres:1.0
+docker run -p 5434:5432 mi-postgres:1.0
 
 Paso 3: Conectarse a PostgreSQL
 docker exec -it postgres-container psql -U myuser -d bootcamp_db
