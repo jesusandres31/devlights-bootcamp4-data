@@ -36,7 +36,7 @@ services:
       MB_DB_PASS: mypassword
       MB_DB_HOST: postgres-db
     ports:
-      - 3000:3000
+      - 4000:3000
     volumes:
       - ./metabase-data:/metabase-data
     depends_on:
