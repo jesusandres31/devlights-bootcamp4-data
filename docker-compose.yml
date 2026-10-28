@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   postgres-db:
     image: postgres:16
@@ -24,28 +22,28 @@ services:
     ports:
       - "8080:80"
 
-  metabase-app:
-    image: metabase/metabase
-    container_name: my_metabase_bootcamp
-    restart: unless-stopped
-    environment:
-      MB_DB_TYPE: postgres
-      MB_DB_DBNAME: postgres
-      MB_DB_PORT: 5432
-      MB_DB_USER: myuser
-      MB_DB_PASS: mypassword
-      MB_DB_HOST: postgres-db
-    ports:
-      - 4000:3000
-    volumes:
-      - ./metabase-data:/metabase-data
-    depends_on:
-      - postgres-db
-    links:
-      - postgres-db
+  # metabase-app:
+  #   image: metabase/metabase
+  #   container_name: my_metabase_bootcamp
+  #   restart: unless-stopped
+  #   environment:
+  #     MB_DB_TYPE: postgres
+  #     MB_DB_DBNAME: postgres
+  #     MB_DB_PORT: 5432
+  #     MB_DB_USER: myuser
+  #     MB_DB_PASS: mypassword
+  #     MB_DB_HOST: postgres-db
+  #   ports:
+  #     - 4000:3000
+  #   volumes:
+  #     - ./metabase-data:/metabase-data
+  #   depends_on:
+  #     - postgres-db
+  #   links:
+  #     - postgres-db
 
 volumes:
   pgdata:
     name: pgdata
-  metabase-data:
-    name: metabase-data
+  # metabase-data:
+  #   name: metabase-data
