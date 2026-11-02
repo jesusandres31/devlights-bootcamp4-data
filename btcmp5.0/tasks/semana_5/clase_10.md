@@ -6,17 +6,13 @@
 
 ## 🎯 Objetivo
 
-Crear **un ejemplo de cada tipo de relación** (1:1, 1:N y N:N), primero como diagrama en **dbdiagram.io** y después como tablas reales en **PostgreSQL** con sus constraints.
+Crear **un ejemplo de cada tipo de relación** (1:1, 1:N y N:N) como tablas reales en **PostgreSQL**, con sus foreign keys y constraints, y verificar el resultado con el **DER de pgAdmin**.
+
+Trabajar en una base nueva llamada `relaciones_db`.
 
 ---
 
-## 🧱 Parte 1 — Diagramas en dbdiagram.io
-
-Para cada caso:
-
-- Crear las tablas con las columnas indicadas.
-- Definir la **foreign key** que corresponda.
-- Agregar un **comentario (`//`)** explicando la relación.
+## 🧱 Tablas a crear
 
 ### 1️⃣ Uno a Uno (1:1)
 
@@ -39,23 +35,22 @@ Para cada caso:
 - **`pacientes`:** `id` (PK), `nombre`, `fecha_nacimiento`, `telefono`
 - **`enfermedades`:** `id` (PK), `nombre`, `descripcion`, `nivel_gravedad`
 - **`pacientes_enfermedades`:** `paciente_id` (FK), `enfermedad_id` (FK), `fecha_diagnostico`
-  - Índice único `(paciente_id, enfermedad_id)` para evitar duplicados.
+  - Clave primaria compuesta `(paciente_id, enfermedad_id)` para evitar duplicados.
 
 ---
 
-## 🧱 Parte 2 — Pasarlo a PostgreSQL
+## 📝 Pasos
 
-En una base nueva (`relaciones_db`):
-
-1. Escribir los `CREATE TABLE` de las 7 tablas con sus `PRIMARY KEY` y `REFERENCES`.
+1. Escribir los `CREATE TABLE` de las 7 tablas con sus `PRIMARY KEY` y `REFERENCES`, con un comentario (`--`) arriba de cada par explicando la relación.
 2. Agregar al menos estas constraints:
    - `NOT NULL` en los nombres.
    - `UNIQUE` en `licencia` y `patente`.
    - `CHECK` en `nivel_gravedad` para que solo acepte `'leve'`, `'moderada'` o `'grave'`.
-3. Insertar 2–3 filas en cada tabla.
-4. Probar que las constraints funcionan: intentar asignar **dos vehículos al mismo conductor** y anotar el error que devuelve Postgres.
+3. Generar el **DER** en pgAdmin (clic derecho sobre `relaciones_db` → **ERD For Database**) y verificar que se vean las tres relaciones.
+4. Insertar 2–3 filas en cada tabla.
+5. Probar que las constraints funcionan: intentar asignar **dos vehículos al mismo conductor** y anotar el error que devuelve Postgres.
 
 ## ✅ Entrega
 
-- Link (o captura) de los 3 diagramas de dbdiagram.io.
+- Captura del DER de pgAdmin.
 - Archivo `.sql` con los `CREATE TABLE`, los `INSERT` y el `INSERT` que falla (comentado, con el error).

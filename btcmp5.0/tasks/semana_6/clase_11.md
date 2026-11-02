@@ -6,7 +6,7 @@
 
 ## 🎯 Objetivo
 
-Repetir lo que hicimos con el minimercado, pero con otro negocio: diseñar el diagrama, crear las tablas con constraints y cargar datos.
+Repetir lo que hicimos con el minimercado, pero con otro negocio: crear las tablas con constraints en PostgreSQL, verificar el DER en pgAdmin y cargar datos.
 
 **Elegir UNO** de los tres casos.
 
@@ -43,11 +43,11 @@ Repetir lo que hicimos con el minimercado, pero con otro negocio: diseñar el di
 
 ## 📝 Pasos
 
-1. Diagrama en **dbdiagram.io** con PKs, FKs y un comentario (`//`) en cada relación.
-2. `CREATE TABLE` en **PostgreSQL** usando al menos una vez cada constraint: `NOT NULL`, `UNIQUE`, `CHECK`, `DEFAULT`.
+1. `CREATE TABLE` en **PostgreSQL** con PKs, FKs y un comentario (`--`) en cada relación, usando al menos una vez cada constraint: `NOT NULL`, `UNIQUE`, `CHECK`, `DEFAULT`.
+2. Generar el **DER** en pgAdmin (clic derecho sobre la base → **ERD For Database**) y verificar que se vean las relaciones 1:1, 1:N y N:N.
 3. Insertar al menos 3 filas por tabla.
 
 ## ✅ Entrega
 
-- Link (o captura) del diagrama.
+- Captura del DER de pgAdmin.
 - Archivo `.sql` con los `CREATE TABLE` y los `INSERT`.

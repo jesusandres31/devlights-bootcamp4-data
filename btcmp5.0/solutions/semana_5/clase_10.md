@@ -4,89 +4,12 @@
 
 ---
 
-## 🧱 Parte 1 — Diagramas en dbdiagram.io
-
-### 1️⃣ Uno a Uno (1:1)
-
-```dbml
-// Relación 1:1 — Cada conductor tiene un solo vehículo
-// y cada vehículo está asignado a un solo conductor.
-
-Table conductores {
-  id integer [pk]
-  nombre varchar
-  licencia varchar
-  fecha_ingreso date
-}
-
-Table vehiculos {
-  id integer [pk]
-  patente varchar
-  modelo varchar
-  conductor_id integer [unique, ref: - conductores.id] // unique asegura 1:1
-}
-```
-
-### 2️⃣ Uno a Muchos (1:N)
-
-```dbml
-// Relación 1:N — Un profesor dicta muchas clases,
-// cada clase pertenece a un solo profesor.
-
-Table profesores {
-  id integer [pk]
-  nombre varchar
-  especialidad varchar
-  fecha_contratacion date
-}
-
-Table clases {
-  id integer [pk]
-  nombre varchar
-  horario varchar
-  profesor_id integer [not null, ref: > profesores.id]
-}
-```
-
-### 3️⃣ Muchos a Muchos (N:N)
-
-```dbml
-// Relación N:N — Un paciente puede tener muchas enfermedades y viceversa.
-// La tabla intermedia conecta ambas y el índice único evita duplicados.
-
-Table pacientes {
-  id integer [pk]
-  nombre varchar
-  fecha_nacimiento date
-  telefono varchar
-}
-
-Table enfermedades {
-  id integer [pk]
-  nombre varchar
-  descripcion text
-  nivel_gravedad varchar
-}
-
-Table pacientes_enfermedades {
-  paciente_id integer [not null, ref: > pacientes.id]
-  enfermedad_id integer [not null, ref: > enfermedades.id]
-  fecha_diagnostico date
-
-  indexes {
-    (paciente_id, enfermedad_id) [unique] // evita duplicados
-  }
-}
-```
-
----
-
-## 🧱 Parte 2 — PostgreSQL
+## 🧱 PostgreSQL
 
 ### `CREATE TABLE`
 
 ```sql
--- 1:1
+-- 1:1 — Cada conductor tiene un solo vehículo y cada vehículo un solo conductor
 CREATE TABLE conductores (
     id SERIAL PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
@@ -101,7 +24,7 @@ CREATE TABLE vehiculos (
     conductor_id INTEGER UNIQUE REFERENCES conductores(id)  -- UNIQUE = 1:1
 );
 
--- 1:N
+-- 1:N — Un profesor dicta muchas clases, cada clase es de un solo profesor
 CREATE TABLE profesores (
     id SERIAL PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
@@ -116,7 +39,7 @@ CREATE TABLE clases (
     profesor_id INTEGER NOT NULL REFERENCES profesores(id)
 );
 
--- N:N
+-- N:N — Un paciente puede tener muchas enfermedades y viceversa
 CREATE TABLE pacientes (
     id SERIAL PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
@@ -138,6 +61,14 @@ CREATE TABLE pacientes_enfermedades (
     PRIMARY KEY (paciente_id, enfermedad_id)  -- evita duplicados
 );
 ```
+
+### DER en pgAdmin
+
+En el **ERD For Database** tienen que verse tres grupos separados:
+
+- `conductores` — `vehiculos` (1:1)
+- `profesores` → `clases` (1:N)
+- `pacientes` ↔ `enfermedades` a través de `pacientes_enfermedades` (N:N)
 
 ### `INSERT`
 

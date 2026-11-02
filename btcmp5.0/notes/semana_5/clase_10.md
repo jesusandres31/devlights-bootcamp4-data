@@ -160,78 +160,63 @@ VALUES ('Pedro', 4000, '2023-05-01', 99);
 
 ---
 
-## 🧩 3. Repaso de relaciones (dbdiagram.io)
+## 🧩 3. Repaso de relaciones en PostgreSQL
 
-```dbml
-//////////////////////////////////////////////////////////
-// One-to-One (1:1)
-//////////////////////////////////////////////////////////
+Los mismos tres tipos de relaciones de la Clase 8, ahora como tablas reales:
 
-// Each person has exactly one passport,
-// and each passport belongs to exactly one person.
+```sql
+-- 1:1 — Cada persona tiene un solo pasaporte y cada pasaporte es de una sola persona
+CREATE TABLE persons (
+    id SERIAL PRIMARY KEY,
+    full_name VARCHAR(100) NOT NULL
+);
 
-Table persons {
-  id integer [pk]
-  full_name varchar
-}
+CREATE TABLE passports (
+    id SERIAL PRIMARY KEY,
+    passport_number VARCHAR(20) NOT NULL,
+    person_id INTEGER UNIQUE REFERENCES persons(id)  -- UNIQUE asegura 1:1
+);
 
-Table passports {
-  id integer [pk]
-  passport_number varchar
-  person_id integer [unique, ref: - persons.id] // unique ensures 1:1
-}
+-- 1:N — Un usuario crea muchos posts, cada post es de un solo usuario
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50) NOT NULL
+);
 
-//////////////////////////////////////////////////////////
-// One-to-Many (1:N)
-//////////////////////////////////////////////////////////
+CREATE TABLE posts (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(150),
+    content TEXT,
+    user_id INTEGER NOT NULL REFERENCES users(id)
+);
 
-// One user can create many posts,
-// but each post belongs to only one user.
+-- N:N — Un alumno se inscribe en muchos cursos y un curso tiene muchos alumnos
+CREATE TABLE students (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100),
+    email VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
-Table users {
-  id integer [pk]
-  username varchar
-}
+CREATE TABLE courses (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(100),
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
-Table posts {
-  id integer [pk]
-  title varchar
-  content text
-  user_id integer [not null, ref: > users.id]
-}
-
-//////////////////////////////////////////////////////////
-// Many-to-Many (N:N)
-//////////////////////////////////////////////////////////
-
-// A student can enroll in many courses,
-// and a course can have many students.
-// We need a junction table to link them.
-
-Table students {
-  id integer [pk]
-  name varchar
-  email varchar
-  created_at timestamp
-}
-
-Table courses {
-  id integer [pk]
-  title varchar
-  description text
-  created_at timestamp
-}
-
-Table student_courses {
-  student_id integer [not null, ref: > students.id]
-  course_id integer [not null, ref: > courses.id]
-  enrollment_date timestamp
-
-  indexes {
-    (student_id, course_id) [unique] // composite key to avoid duplicates
-  }
-}
+-- Tabla intermedia
+CREATE TABLE student_courses (
+    student_id INTEGER NOT NULL REFERENCES students(id),
+    course_id INTEGER NOT NULL REFERENCES courses(id),
+    enrollment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (student_id, course_id)  -- evita inscripciones duplicadas
+);
 ```
+
+### Ver el DER en pgAdmin
+
+Clic derecho sobre la base → **ERD For Database**. pgAdmin dibuja las tablas y las relaciones a partir de las foreign keys.
 
 ### Cómo se traduce cada relación a SQL
 

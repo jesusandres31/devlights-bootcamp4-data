@@ -8,67 +8,31 @@
 
 Son exactamente los pasos de la clase: [Clase 15 → secciones 2 a 4](../../notes/semana_8/clase_15.md#-2-preparación-un-schema-analítico). Si el alumno eligió otro nombre de schema, solo cambia el prefijo `northwind_olap.`.
 
-## 3️⃣ DER esperado
+## 3️⃣ PKs, FKs y DER
 
-```dbml
-// Esquema estrella — northwind_olap
+Las tablas creadas con CTAS **no copian PKs ni FKs**, así que el DER de pgAdmin las muestra sueltas. Se agregan con `ALTER TABLE`:
 
-Table fact_sales {
-  order_id integer
-  order_date date [ref: > dim_date.date_key]
-  customer_id varchar [ref: > dim_customer.customer_id]
-  employee_id integer [ref: > dim_employee.employee_id]
-  shipper_id integer [ref: > dim_shipper.shipper_id]
-  product_id integer [ref: > dim_product.product_id]
-  quantity integer
-  unit_price numeric
-  discount numeric
-  total_amount numeric
-}
+```sql
+-- PKs en las dimensiones
+ALTER TABLE northwind_olap.dim_customer ADD PRIMARY KEY (customer_id);
+ALTER TABLE northwind_olap.dim_product  ADD PRIMARY KEY (product_id);
+ALTER TABLE northwind_olap.dim_employee ADD PRIMARY KEY (employee_id);
+ALTER TABLE northwind_olap.dim_shipper  ADD PRIMARY KEY (shipper_id);
+ALTER TABLE northwind_olap.dim_date     ADD PRIMARY KEY (date_key);
 
-Table dim_customer {
-  customer_id varchar [pk]
-  company_name varchar
-  contact_name varchar
-  country varchar
-  city varchar
-  region varchar
-}
+-- PK de la tabla de hechos: una línea de pedido = pedido + producto
+ALTER TABLE northwind_olap.fact_sales ADD PRIMARY KEY (order_id, product_id);
 
-Table dim_product {
-  product_id integer [pk]
-  product_name varchar
-  category_name varchar
-  supplier_name varchar
-}
-
-Table dim_employee {
-  employee_id integer [pk]
-  first_name varchar
-  last_name varchar
-  title varchar
-  city varchar
-  country varchar
-}
-
-Table dim_shipper {
-  shipper_id integer [pk]
-  shipper_name varchar
-}
-
-Table dim_date {
-  date_key date [pk]
-  year integer
-  quarter integer
-  month integer
-  month_name varchar
-  day integer
-  weekday integer
-  weekday_name varchar
-}
+-- FKs desde la tabla de hechos hacia cada dimensión
+ALTER TABLE northwind_olap.fact_sales
+    ADD FOREIGN KEY (customer_id) REFERENCES northwind_olap.dim_customer(customer_id),
+    ADD FOREIGN KEY (product_id)  REFERENCES northwind_olap.dim_product(product_id),
+    ADD FOREIGN KEY (employee_id) REFERENCES northwind_olap.dim_employee(employee_id),
+    ADD FOREIGN KEY (shipper_id)  REFERENCES northwind_olap.dim_shipper(shipper_id),
+    ADD FOREIGN KEY (order_date)  REFERENCES northwind_olap.dim_date(date_key);
 ```
 
-> ⚠️ Las tablas creadas con CTAS **no copian PKs ni FKs**, por eso el ERD de pgAdmin las muestra sueltas. Para que se dibujen las relaciones se pueden agregar con `ALTER TABLE ... ADD PRIMARY KEY` / `ADD FOREIGN KEY` (opcional).
+**DER esperado** (clic derecho sobre la base → **ERD For Database**): `fact_sales` en el centro y las 5 dimensiones alrededor, cada una con una relación 1:N hacia la tabla de hechos → la "estrella".
 
 ## 4️⃣ Gráficos en Metabase
 

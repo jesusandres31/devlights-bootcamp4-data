@@ -1,6 +1,6 @@
 # Semana 6 · Clase 11 — Diseño de una base completa: minimercado
 
-> 🎯 **Objetivo:** diseñar una base real de punta a punta: diagrama → `CREATE TABLE` con constraints → datos de ejemplo → una **transacción** que registra una venta.
+> 🎯 **Objetivo:** diseñar una base real de punta a punta: `CREATE TABLE` con constraints → DER en pgAdmin → datos de ejemplo → una **transacción** que registra una venta.
 >
 > 📝 **Tarea:** [Tarea Clase 11 — Diseñar una base de datos](../../tasks/semana_6/clase_11.md)
 
@@ -27,68 +27,14 @@ La base debe aplicar **constraints** (`PK`, `FK`, `UNIQUE`, `CHECK`, `NOT NULL`,
 
 ### Actividad
 
-1. Crear el diagrama en **dbdiagram.io**.
-2. Crear la base `minimercado` en **PostgreSQL** con `CREATE TABLE` y constraints.
+1. Crear la base `minimercado` en **PostgreSQL** con `CREATE TABLE` y constraints.
+2. Verificar el diseño con el **DER de pgAdmin**.
 3. Insertar algunos registros de ejemplo.
 4. Registrar una venta con una **transacción**: crear la venta, insertar el detalle y actualizar el stock.
 
 ---
 
-## 🧩 2. Diagrama (dbdiagram.io)
-
-```dbml
-// Minimercado
-
-Table clientes {
-  id integer [pk]
-  nombre varchar
-  email varchar [unique]
-  telefono varchar
-}
-
-Table proveedores {
-  id integer [pk]
-  nombre varchar
-  telefono varchar
-  direccion varchar
-}
-
-Table productos {
-  id integer [pk]
-  nombre varchar
-  precio numeric
-  stock integer
-  proveedor_id integer [not null, ref: > proveedores.id] // 1:N
-}
-
-Table metodos_pago {
-  id integer [pk]
-  nombre varchar // Ej: Efectivo, Tarjeta, Transferencia
-}
-
-Table ventas {
-  id integer [pk]
-  cliente_id integer [not null, ref: > clientes.id] // 1:N
-  metodo_pago_id integer [not null, ref: > metodos_pago.id] // 1:N
-  fecha timestamp [default: `current_timestamp`]
-  total numeric
-}
-
-Table venta_productos {
-  venta_id integer [not null, ref: > ventas.id]
-  producto_id integer [not null, ref: > productos.id]
-  cantidad integer [not null]
-  precio_unitario numeric [not null]
-
-  indexes {
-    (venta_id, producto_id) [pk] // N:N
-  }
-}
-```
-
----
-
-## 🧩 3. Tablas en PostgreSQL
+## 🧩 2. Tablas en PostgreSQL
 
 ```sql
 CREATE TABLE clientes (
@@ -136,9 +82,18 @@ CREATE TABLE venta_productos (
 );
 ```
 
+### Ver el DER
+
+Clic derecho sobre la base `minimercado` → **ERD For Database**. Revisar que aparezcan:
+
+- `clientes` → `ventas` (1:N)
+- `metodos_pago` → `ventas` (1:N)
+- `proveedores` → `productos` (1:N)
+- `ventas` ↔ `productos` a través de `venta_productos` (N:N)
+
 ---
 
-## 🧩 4. Datos de ejemplo
+## 🧩 3. Datos de ejemplo
 
 ```sql
 INSERT INTO clientes (nombre, email, telefono) VALUES
@@ -170,7 +125,7 @@ INSERT INTO venta_productos (venta_id, producto_id, cantidad, precio_unitario) V
 
 ---
 
-## 🧩 5. Transacción: registrar una venta
+## 🧩 4. Transacción: registrar una venta
 
 Una venta toca **3 tablas**. Si algún paso falla, no queremos que quede la venta a medias: por eso va dentro de `BEGIN` / `COMMIT`.
 
@@ -228,7 +183,7 @@ ROLLBACK;
 
 ---
 
-## 🧩 6. Práctica grupal en clase — Cine 🎬
+## 🧩 5. Práctica grupal en clase — Cine 🎬
 
 Diseñar en grupo una base de datos para un **cine** que permita registrar:
 
@@ -241,7 +196,7 @@ Diseñar en grupo una base de datos para un **cine** que permita registrar:
 
 - Representar las **relaciones entre entidades** (1:N y al menos una N:N).
 - Usar **constraints**: `PRIMARY KEY`, `FOREIGN KEY`, `NOT NULL`, `UNIQUE`, `CHECK`.
-- Hacerlo en **dbdiagram.io** o escribir las sentencias `CREATE TABLE`.
+- Escribir las sentencias `CREATE TABLE` en PostgreSQL y mostrar el **DER de pgAdmin**.
 
 ### 💡 Pistas
 

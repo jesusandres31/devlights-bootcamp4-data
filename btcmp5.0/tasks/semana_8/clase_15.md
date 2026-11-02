@@ -12,7 +12,7 @@ Construir el esquema estrella de Northwind en tu propia base y visualizarlo en M
 
 1. Crear un **schema nuevo** en tu base `northwind` (distinto de `public`).
 2. Usando **CTAS** (`CREATE TABLE ... AS SELECT`), generar la tabla de hechos y las tablas de dimensiones del esquema estrella.
-3. Compartir una imagen del **DER** de ese schema (pgAdmin → clic derecho sobre el schema → _ERD For Schema_, o dbdiagram.io).
+3. Las tablas creadas con CTAS no tienen PK ni FK: agregarlas con `ALTER TABLE` (PK en cada dimensión y FK desde `fact_sales` hacia cada una) y compartir una imagen del **DER** de ese schema con la herramienta de pgAdmin (clic derecho sobre la base → **ERD For Database**).
 4. Levantar **Metabase**, conectar la base y crear estos gráficos usando el esquema analítico:
 
 | #  | Gráfico                         | Tipo recomendado                                      |
