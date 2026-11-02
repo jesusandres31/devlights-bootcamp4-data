@@ -1,300 +1,242 @@
-# Semana 5 · Clase 10
+# Semana 5 · Clase 10 — Constraints, normalización y relaciones
 
-## 🧩 Consigna — Base de datos de un minimercado
-
-### 🎯 Objetivo
-
-Crear una base de datos para un **negocio/minimercado** donde se puedan gestionar:
-
-- Clientes
-- Productos
-- Proveedores
-- Ventas y los productos vendidos por cada venta
-- Control de stock
-- Métodos de pago
-
-La base debe permitir manejar **las relaciones entre las entidades**, aplicando **constraints** (`PK`, `FK`, `UNIQUE`, `CHECK`, `NOT NULL`, `DEFAULT`) y representar **los tres tipos de relaciones** (1:1, 1:N y N:N).
-
-### 📝 Tablas sugeridas y relaciones
-
-1. **Clientes** — 1:N con ventas (un cliente puede tener muchas ventas).
-2. **Productos** — N:N con ventas (una venta puede tener varios productos, un producto puede estar en varias ventas).
-3. **Proveedores** — 1:N con productos (un proveedor puede vender muchos productos).
-4. **Ventas** — 1:N con clientes y N:N con productos a través de tabla intermedia.
-5. **Otras** — stock, categorías, métodos de pago, etc.
-
-### 💡 Actividad
-
-- Crear el diagrama en **dbdiagram.io** y representar las relaciones.
-- Crear la base en **PostgreSQL** con `CREATE TABLE` y constraints.
-- Insertar algunos registros de ejemplo.
-- Hacer un ejemplo de **transaction** donde se registre una venta, se actualice stock y se inserten los detalles de venta.
+> 🎯 **Objetivo:** proteger los datos con constraints (`NOT NULL`, `UNIQUE`, `CHECK`, `DEFAULT`), separar una tabla en dos (normalización) y unirlas con una **foreign key**. Repasar los tipos de relaciones.
+>
+> 📝 **Tarea:** [Tarea Clase 10 — Relaciones con foreign keys](../../tasks/semana_5/clase_10.md)
 
 ---
 
-## 🧩 Solución
+## 🧩 1. Constraints
 
-### 🧱 dbdiagram.io
+### Ejemplo práctico
+
+```sql
+CREATE TABLE clients (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(50) NOT NULL,
+  email VARCHAR(100) UNIQUE,
+  birth_date DATE CHECK (birth_date < CURRENT_DATE),
+  created_at DATE DEFAULT CURRENT_DATE
+);
+```
+
+### ✅ Inserción válida
+
+```sql
+INSERT INTO clients (name, email, birth_date)
+VALUES ('Ana', 'ana@example.com', '1990-05-12');
+```
+
+### ❌ Probar `NOT NULL`
+
+Insertar un cliente sin nombre:
+
+```sql
+INSERT INTO clients (email, birth_date)
+VALUES ('noname@example.com', '1985-01-01');
+```
+
+👉 **Error esperado:** `ERROR: null value in column "name" violates not-null constraint`
+
+### ❌ Probar `UNIQUE`
+
+Repetir un email existente:
+
+```sql
+INSERT INTO clients (name, email, birth_date)
+VALUES ('Carlos', 'ana@example.com', '1992-07-15');
+```
+
+👉 **Error esperado:** `ERROR: duplicate key value violates unique constraint "clients_email_key"`
+
+### ❌ Probar `CHECK`
+
+Insertar un cliente con fecha de nacimiento futura:
+
+```sql
+INSERT INTO clients (name, email, birth_date)
+VALUES ('Lucía', 'lucia@example.com', '2090-01-01');
+```
+
+👉 **Error esperado:** `ERROR: new row for relation "clients" violates check constraint "clients_birth_date_check"`
+
+### 🧾 Verificar los datos válidos
+
+```sql
+SELECT * FROM clients;  -- solo está Ana, con created_at = hoy (DEFAULT)
+```
+
+💬 **Conclusión:** las constraints **protegen la base de datos** de errores humanos o de aplicaciones.
+
+---
+
+## 🧩 2. Normalización
+
+### Punto de partida: la tabla de la Clase 9
+
+```sql
+CREATE TABLE employees (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50),
+    department VARCHAR(50),   -- 'IT', 'HR', ... se repite en muchas filas
+    salary NUMERIC,
+    hire_date DATE
+);
+```
+
+El nombre del departamento se repite en cada empleado: si cambia, hay que actualizar muchas filas.
+
+### Separar en dos tablas
+
+```sql
+DROP TABLE IF EXISTS employees;
+
+CREATE TABLE departments (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50)
+);
+
+CREATE TABLE employees (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50),
+    salary NUMERIC,
+    hire_date DATE,
+    department_id INTEGER REFERENCES departments(id)
+);
+```
+
+### Alternativa: agregar la foreign key después
+
+```sql
+DROP TABLE employees;
+DROP TABLE departments;
+
+-- 1️⃣ Crear las tablas sin la constraint
+CREATE TABLE departments (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50)
+);
+
+CREATE TABLE employees (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50),
+    salary NUMERIC,
+    hire_date DATE,
+    department_id INTEGER
+);
+
+-- 2️⃣ Agregar la foreign key constraint
+ALTER TABLE employees
+ADD CONSTRAINT fk_department
+FOREIGN KEY (department_id)
+REFERENCES departments(id);
+```
+
+### Insertar datos coherentes
+
+```sql
+INSERT INTO departments (name) VALUES
+('IT'),
+('HR'),
+('Finance'),
+('Marketing');
+
+INSERT INTO employees (name, salary, hire_date, department_id) VALUES
+('Ana', 5000, '2021-03-15', 1),
+('Carlos', 4200, '2022-06-10', 2),
+('Laura', 6000, '2020-11-05', 1),
+('Mateo', 4800, '2023-01-12', 3),
+('Lucía', 4700, '2022-09-25', 3);
+```
+
+### ❌ Probar la foreign key
+
+```sql
+INSERT INTO employees (name, salary, hire_date, department_id)
+VALUES ('Pedro', 4000, '2023-05-01', 99);
+```
+
+👉 **Error esperado:** `ERROR: insert or update on table "employees" violates foreign key constraint "fk_department"`
+
+---
+
+## 🧩 3. Repaso de relaciones (dbdiagram.io)
 
 ```dbml
-// Minimercado
+//////////////////////////////////////////////////////////
+// One-to-One (1:1)
+//////////////////////////////////////////////////////////
 
-Table clientes {
+// Each person has exactly one passport,
+// and each passport belongs to exactly one person.
+
+Table persons {
   id integer [pk]
-  nombre varchar
-  email varchar [unique]
-  telefono varchar
+  full_name varchar
 }
 
-Table proveedores {
+Table passports {
   id integer [pk]
-  nombre varchar
-  telefono varchar
-  direccion varchar
+  passport_number varchar
+  person_id integer [unique, ref: - persons.id] // unique ensures 1:1
 }
 
-Table productos {
+//////////////////////////////////////////////////////////
+// One-to-Many (1:N)
+//////////////////////////////////////////////////////////
+
+// One user can create many posts,
+// but each post belongs to only one user.
+
+Table users {
   id integer [pk]
-  nombre varchar
-  precio numeric
-  stock integer
-  proveedor_id integer [not null, ref: > proveedores.id] // 1:N
+  username varchar
 }
 
-Table metodos_pago {
+Table posts {
   id integer [pk]
-  nombre varchar // Ej: Efectivo, Tarjeta, Transferencia
+  title varchar
+  content text
+  user_id integer [not null, ref: > users.id]
 }
 
-Table ventas {
+//////////////////////////////////////////////////////////
+// Many-to-Many (N:N)
+//////////////////////////////////////////////////////////
+
+// A student can enroll in many courses,
+// and a course can have many students.
+// We need a junction table to link them.
+
+Table students {
   id integer [pk]
-  cliente_id integer [not null, ref: > clientes.id] // 1:N
-  metodo_pago_id integer [not null, ref: > metodos_pago.id] // FK obligatoria
-  fecha timestamp [default: `current_timestamp`]
-  total numeric
+  name varchar
+  email varchar
+  created_at timestamp
 }
 
-Table venta_productos {
-  venta_id integer [not null, ref: > ventas.id]
-  producto_id integer [not null, ref: > productos.id]
-  cantidad integer [not null]
-  precio_unitario numeric [not null]
+Table courses {
+  id integer [pk]
+  title varchar
+  description text
+  created_at timestamp
+}
+
+Table student_courses {
+  student_id integer [not null, ref: > students.id]
+  course_id integer [not null, ref: > courses.id]
+  enrollment_date timestamp
 
   indexes {
-    (venta_id, producto_id) [unique] // N:N composite
+    (student_id, course_id) [unique] // composite key to avoid duplicates
   }
 }
 ```
 
-### 🧱 PostgreSQL
+### Cómo se traduce cada relación a SQL
 
-```sql
--- Clientes
-CREATE TABLE clientes (
-    id SERIAL PRIMARY KEY,
-    nombre VARCHAR(100) NOT NULL,
-    email VARCHAR(100) UNIQUE,
-    telefono VARCHAR(20)
-);
-
--- Proveedores
-CREATE TABLE proveedores (
-    id SERIAL PRIMARY KEY,
-    nombre VARCHAR(100) NOT NULL,
-    telefono VARCHAR(20),
-    direccion VARCHAR(150)
-);
-
--- Productos
-CREATE TABLE productos (
-    id SERIAL PRIMARY KEY,
-    nombre VARCHAR(100) NOT NULL,
-    precio NUMERIC(10,2) NOT NULL CHECK (precio >= 0),
-    stock INTEGER NOT NULL CHECK (stock >= 0),
-    proveedor_id INTEGER NOT NULL REFERENCES proveedores(id)
-);
-
--- Métodos de pago
-CREATE TABLE metodos_pago (
-    id SERIAL PRIMARY KEY,
-    nombre VARCHAR(50) NOT NULL
-);
-
--- Ventas
-CREATE TABLE ventas (
-    id SERIAL PRIMARY KEY,
-    cliente_id INTEGER NOT NULL REFERENCES clientes(id),
-    metodo_pago_id INTEGER NOT NULL REFERENCES metodos_pago(id),
-    fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    total NUMERIC(10,2)
-);
-
--- Venta_Productos (N:N)
-CREATE TABLE venta_productos (
-    venta_id INTEGER NOT NULL REFERENCES ventas(id),
-    producto_id INTEGER NOT NULL REFERENCES productos(id),
-    cantidad INTEGER NOT NULL CHECK (cantidad > 0),
-    precio_unitario NUMERIC(10,2) NOT NULL CHECK (precio_unitario >= 0),
-    PRIMARY KEY (venta_id, producto_id)
-);
-```
-
-### 🧱 Inserción de datos
-
-```sql
--- Clientes
-INSERT INTO clientes (nombre, email, telefono) VALUES
-('Ana Perez','ana@example.com','1111-2222'),
-('Carlos Lopez','carlos@example.com','3333-4444');
-
--- Proveedores
-INSERT INTO proveedores (nombre, telefono, direccion) VALUES
-('Proveedor 1','5555-6666','Calle Falsa 123'),
-('Proveedor 2','7777-8888','Av Siempre Viva 456');
-
--- Productos
-INSERT INTO productos (nombre, precio, stock, proveedor_id) VALUES
-('Leche', 100, 50, 1),
-('Pan', 50, 100, 1),
-('Queso', 200, 30, 2);
-
--- Métodos de pago
-INSERT INTO metodos_pago (nombre) VALUES
-('Efectivo'),
-('Tarjeta'),
-('Transferencia');
-
--- Ventas con método de pago obligatorio
-INSERT INTO ventas (cliente_id, metodo_pago_id, total) VALUES
-(1, 1, 0), -- Ana, Efectivo
-(2, 2, 0); -- Carlos, Tarjeta
-
--- Venta_Productos
-INSERT INTO venta_productos (venta_id, producto_id, cantidad, precio_unitario) VALUES
-(1, 1, 2, 100),
-(1, 2, 5, 50);
-```
-
-### 🧱 Transaction de una venta
-
-Se usa una CTE (`WITH ...`) para encadenar todos los pasos dentro de la misma transacción.
-
-```sql
-BEGIN;
-
--- 1️⃣ Crear la venta y capturar su id
-WITH nueva_venta AS (
-  INSERT INTO ventas (cliente_id, metodo_pago_id, total)
-  VALUES (2, 2, 0)
-  RETURNING id
-),
-
--- 2️⃣ Insertar los productos de esa venta
-productos_insertados AS (
-  INSERT INTO venta_productos (venta_id, producto_id, cantidad, precio_unitario)
-  SELECT id, 1, 1, 100 FROM nueva_venta
-  UNION ALL
-  SELECT id, 3, 2, 200 FROM nueva_venta
-  RETURNING venta_id
-),
-
--- 3️⃣ Actualizar el stock de los productos
-stock_actualizado AS (
-  UPDATE productos
-  SET stock = stock - CASE id
-    WHEN 1 THEN 1
-    WHEN 3 THEN 2
-    ELSE 0
-  END
-  WHERE id IN (1, 3)
-  RETURNING 1
-)
-
--- 4️⃣ Calcular y actualizar el total de la venta
-UPDATE ventas
-SET total = (
-  SELECT SUM(cantidad * precio_unitario)
-  FROM venta_productos
-  WHERE venta_id = ventas.id
-)
-WHERE id IN (SELECT venta_id FROM productos_insertados);
-
-COMMIT;
-```
-
----
-
-## 🧩 Mini práctica grupal — Base de datos de un cine 🎬
-
-### 🎯 Objetivo
-
-Diseñar en grupo una base de datos para un **cine** que permita registrar:
-
-- Las películas que se proyectan.
-- Las funciones (día y hora en que se proyectan).
-- Las salas del cine.
-- Los clientes y las entradas vendidas.
-
-### 📝 Requisitos
-
-- Representar las **relaciones entre entidades** (usar 1:1, 1:N y al menos una N:N).
-- Usar **constraints** básicos: `PRIMARY KEY`, `FOREIGN KEY`, `NOT NULL`, `UNIQUE`, `CHECK`.
-- Pueden hacerlo en **dbdiagram.io** o escribir las sentencias `CREATE TABLE`.
-
-### 💡 Pistas / Guía
-
-- Una **sala** puede tener **muchas funciones** (1:N).
-- Una **película** puede tener **muchas funciones** (1:N).
-- Un **cliente** puede comprar **muchas entradas**, y una **función** puede tener **muchos clientes** (N:N mediante una tabla intermedia `entradas`).
-
-### ⚡ Desafío extra (si terminan rápido)
-
-Agreguen una tabla opcional, por ejemplo:
-
-- `empleados` (que atienden las funciones o ventas)
-- `categorías` de películas (acción, comedia, etc.)
-- `formas_de_pago`
-
----
-
-## 🧩 Tarea — Bases de datos de ejemplo
-
-### 🎯 Objetivo
-
-Crear **diagramas de bases de datos** en dbdiagram.io para tres casos distintos, aplicando **relaciones 1:1, 1:N y N:N**, y definiendo **primary keys y foreign keys**.
-
-### 1️⃣ Biblioteca
-
-**Consigna:**
-
-Crea una base de datos para una **biblioteca**.
-
-- **Tablas a crear:** `libros`, `autores`, `prestamos`, `socios`.
-- **Relaciones:**
-  - Un libro puede tener un solo autor (1:N de autores a libros).
-  - Un socio puede tener muchos préstamos (1:N de socios a prestamos).
-  - Un préstamo puede incluir varios libros y un libro puede estar en varios préstamos (N:N mediante tabla intermedia `prestamo_libros`).
-
-### 2️⃣ Hospital
-
-**Consigna:**
-
-Crea una base de datos para un **hospital**.
-
-- **Tablas a crear:** `pacientes`, `medicos`, `citas`, `enfermedades`.
-- **Relaciones:**
-  - Un paciente puede tener muchas citas (1:N de pacientes a citas).
-  - Un médico puede atender muchas citas (1:N de médicos a citas).
-  - Un paciente puede tener varias enfermedades y una enfermedad puede afectar a muchos pacientes (N:N mediante tabla intermedia `paciente_enfermedad`).
-
-### 3️⃣ Veterinaria
-
-**Consigna:**
-
-Crea una base de datos para una **veterinaria**.
-
-- **Tablas a crear:** `mascotas`, `dueños`, `citas`, `tratamientos`.
-- **Relaciones:**
-  - Un dueño puede tener varias mascotas (1:N de dueños a mascotas).
-  - Cada cita se asigna a una mascota (1:N de mascotas a citas).
-  - Una cita puede incluir varios tratamientos y un tratamiento puede estar en varias citas (N:N mediante tabla intermedia `cita_tratamiento`).
+| Relación | En SQL                                                                 |
+| -------- | ---------------------------------------------------------------------- |
+| 1:1      | FK + `UNIQUE` (`person_id INTEGER UNIQUE REFERENCES persons(id)`)      |
+| 1:N      | FK en la tabla "muchos" (`user_id INTEGER NOT NULL REFERENCES users(id)`) |
+| N:N      | Tabla intermedia con dos FK + `PRIMARY KEY (a_id, b_id)`               |
