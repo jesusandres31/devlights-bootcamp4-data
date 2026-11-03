@@ -57,7 +57,27 @@ INSERT INTO employees (name, department, salary, hire_date) VALUES
 ('Isabella', 'HR', 4400, '2020-10-12'),
 ('Juliana', 'Finance', 4950, '2023-03-08'),
 ('Nicolás', 'Marketing', 4700, '2021-12-15'),
-('Fernanda', 'IT', 5800, '2022-05-30');
+('Fernanda', 'IT', 5800, '2022-05-30'),
+('Gabriel', 'IT', 6200, '2020-04-18'),
+('Martina', 'HR', 4600, '2021-09-12'),
+('Tomás', 'Finance', 5300, '2019-06-21'),
+('Florencia', 'Marketing', 4900, '2022-07-14'),
+('Pablo', 'IT', 5700, '2023-02-05'),
+('Daniela', 'HR', 4500, '2020-12-03'),
+('Ricardo', 'Finance', 5200, '2021-05-27'),
+('Agustina', 'Marketing', 4800, '2023-06-19'),
+('Federico', 'IT', 6100, '2018-11-22'),
+('Carolina', 'HR', 4700, '2022-03-16'),
+('Emiliano', 'Finance', 4900, '2020-08-11'),
+('Micaela', 'Marketing', 5100, '2019-10-29'),
+('Sebastián', 'IT', 5900, '2022-12-07'),
+('Paula', 'HR', 4400, '2021-04-25'),
+('Joaquín', 'Finance', 5500, '2023-05-13'),
+('Natalia', 'Marketing', 4650, '2020-02-17'),
+('Bruno', 'IT', 5400, '2021-11-08'),
+('Victoria', 'HR', 4800, '2019-07-30'),
+('Esteban', 'Finance', 5600, '2022-10-04'),
+('Rocío', 'Marketing', 4950, '2023-08-21');
 ```
 
 ---
