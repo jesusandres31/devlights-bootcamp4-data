@@ -27,7 +27,13 @@ Comandos útiles de `psql`:
 
 ## 🧩 2. pgAdmin: crear la base y la tabla
 
-Crear una base `bootcamp` y, dentro, la tabla:
+Crear una base `bootcamp`
+
+```sql
+CREATE DATABASE bootcamp;
+```
+
+Y, dentro, la tabla:
 
 ```sql
 CREATE TABLE employees (
