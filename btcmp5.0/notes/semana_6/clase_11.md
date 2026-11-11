@@ -2,7 +2,7 @@
 
 > 🎯 **Objetivo:** diseñar una base real de punta a punta: `CREATE TABLE` con constraints → DER en pgAdmin → datos de ejemplo → una **transacción** que registra una venta.
 >
-> 📝 **Tarea:** [Tarea Clase 11 — Diseñar una base de datos](../../tasks/semana_6/clase_11.md)
+> 📝 **Tarea:** [Tarea Clase 11 — Diseñar una base de datos transaccional](../../tasks/semana_6/clase_11.md)
 
 ---
 
