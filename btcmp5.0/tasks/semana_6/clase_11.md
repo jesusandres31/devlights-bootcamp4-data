@@ -1,4 +1,4 @@
-# Semana 6 · Clase 11 · Tarea — Diseñar una base de datos
+# Semana 6 · Clase 11 · Tarea — Diseñar una base de datos transaccional
 
 > 📚 **Tema de la clase:** [Clase 11 — Diseño de una base completa: minimercado](../../notes/semana_6/clase_11.md)
 >
