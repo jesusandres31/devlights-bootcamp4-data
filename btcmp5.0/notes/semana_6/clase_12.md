@@ -8,19 +8,12 @@
 
 ## 🧩 1. Cargar el dataset del minimercado
 
-Usamos la misma estructura de la Clase 11, pero con muchos más datos (15 clientes, 20 productos, 40 ventas).
+Usamos la misma estructura de la Clase 11, pero con muchos más datos (30 clientes, 11 proveedores, 42 productos, 150 ventas).
 
 1. En pgAdmin, sobre la base `minimercado`, abrir el **Query Tool**.
 2. Abrir y ejecutar [`datasets/minimercado.sql`](../../datasets/minimercado.sql) (borra las tablas de la clase anterior y las vuelve a crear con datos).
 
-Para tener casos "sin coincidencia" en los ejemplos, agregar un cliente que nunca compró:
-
-```sql
-INSERT INTO clientes (nombre, email, telefono)
-VALUES ('Cliente Sin Compras', 'sin.compras@email.com', '555-0199');
-```
-
-> 💡 Las ventas 21 a 40 tampoco tienen productos cargados en `venta_productos`: también sirven para ver `NULL` en los LEFT JOIN.
+> 💡 El dataset ya trae varios casos "sin coincidencia" (están listados al principio del `.sql`): clientes que nunca compraron, proveedores sin productos, productos que nunca se vendieron, métodos de pago sin usar y ventas sin productos cargados en `venta_productos` (ids 37, 70, 75, 86, 94, 121, 123, 130). También hay emails, teléfonos y totales en `NULL`.
 
 ---
 
@@ -49,7 +42,7 @@ FROM ventas v
 INNER JOIN clientes c ON v.cliente_id = c.id;
 ```
 
-👉 Clientes con al menos una venta. "Cliente Sin Compras" **no** aparece.
+👉 Clientes con al menos una venta. Los que nunca compraron (por ejemplo "Diego García") **no** aparecen.
 
 ### ⬅️ LEFT JOIN — todo lo de la izquierda + coincidencias
 
@@ -61,7 +54,7 @@ FROM clientes c
 LEFT JOIN ventas v ON v.cliente_id = c.id;
 ```
 
-👉 Todos los clientes, incluso "Cliente Sin Compras" (con `id` y `total` en `NULL`).
+👉 Todos los clientes, incluso los que nunca compraron, como "Diego García" (con `id` y `total` en `NULL`).
 
 Truco: filtrar los `NULL` para encontrar **lo que no tiene coincidencia**:
 
@@ -95,7 +88,7 @@ FULL OUTER JOIN venta_productos vp ON vp.venta_id = v.id
 ORDER BY v.id;
 ```
 
-👉 Incluye las ventas sin detalle (21–40) y, si existiera, detalle sin venta.
+👉 Incluye las ventas sin detalle (37, 70, 75, …) y, si existiera, detalle sin venta.
 
 ### ✖️ CROSS JOIN — todas las combinaciones
 
@@ -107,7 +100,7 @@ FROM clientes c
 CROSS JOIN productos p;
 ```
 
-👉 16 clientes × 20 productos = 320 filas.
+👉 30 clientes × 42 productos = 1260 filas.
 
 ### 🔁 SELF JOIN — una tabla consigo misma
 
