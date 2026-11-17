@@ -12,7 +12,8 @@
 --   * Algunos emails, teléfonos, direcciones y totales en NULL
 -- =====================================================================
 
-DROP TABLE IF EXISTS venta_productos, ventas, metodos_pago, productos, proveedores, clientes;
+-- CASCADE: borra también las vistas que dependan de estas tablas (Clase 13)
+DROP TABLE IF EXISTS venta_productos, ventas, metodos_pago, productos, proveedores, clientes CASCADE;
 
 -- Clientes
 CREATE TABLE clientes (

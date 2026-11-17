@@ -1,0 +1,42 @@
+# Class 17 — Denormalize Northwind with PySpark
+#
+# Usage (from this folder, same in PowerShell and bash):
+#   docker compose up --exit-code-from pyspark   -> loads Northwind, runs PySpark and writes the CSVs to ./output
+#   docker compose down -v                       -> removes the containers and the temporary database
+#
+# Independent from the bootcamp docker-compose.yml (Class 8): it uses its own
+# containers and publishes no ports, so it doesn't clash with the existing Postgres.
+
+services:
+  postgres-db:
+    image: postgres:16
+    container_name: pyspark_postgres
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: northwind          # creates the empty database on startup...
+    volumes:
+      # ...and automatically runs every .sql file in /docker-entrypoint-initdb.d
+      - ../datasets/northwind.sql:/docker-entrypoint-initdb.d/northwind.sql:ro
+    healthcheck:
+      # "healthy" only once Northwind has finished loading
+      test: ["CMD-SHELL", "psql -h 127.0.0.1 -U myuser -d northwind -c 'SELECT 1 FROM order_details LIMIT 1'"]
+      interval: 3s
+      timeout: 5s
+      retries: 40
+
+  pyspark:
+    image: spark:3.5.3-python3
+    container_name: pyspark_job
+    user: root                        # needed to write to ./output
+    depends_on:
+      postgres-db:
+        condition: service_healthy    # waits until Northwind is loaded
+    volumes:
+      - ./desnormalizar_northwind.py:/app/desnormalizar_northwind.py:ro
+      - ./output:/output              # the CSVs show up here on the host
+    command: >
+      /opt/spark/bin/spark-submit
+      --packages org.postgresql:postgresql:42.7.4
+      --conf spark.log.level=WARN
+      /app/desnormalizar_northwind.py

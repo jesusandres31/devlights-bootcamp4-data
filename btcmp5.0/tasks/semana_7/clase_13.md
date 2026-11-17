@@ -1,42 +1,42 @@
-# Semana 7 · Clase 13 · Tarea — Consultas sobre Northwind
+# Semana 7 · Clase 13 · Tarea — SQL avanzado sobre el minimercado
 
-> 📚 **Tema de la clase:** [Clase 13 — Práctica SQL con Northwind](../../notes/semana_7/clase_13.md)
+> 📚 **Tema de la clase:** [Clase 13 — SQL avanzado: vistas, índices, procedimientos almacenados y triggers](../../notes/semana_7/clase_13.md)
 >
-> 📅 **Entrega:** traer resuelto para la Clase 15.
+> 📅 **Entrega:** traer resuelto para la Clase 14.
 
 ## 🎯 Objetivo
 
-Resolver consultas de dificultad creciente sobre Northwind, combinando filtros, agregaciones y joins.
+Crear vistas, índices, funciones, procedimientos y triggers sobre la base del minimercado.
 
 ## 🧱 Preparación
 
-Tener restaurada la base `northwind` (ver [Clase 13 → Restaurar Northwind](../../notes/semana_7/clase_13.md#-1-restaurar-northwind)).
+Partir de la base `minimercado` limpia: volver a ejecutar [`datasets/minimercado.sql`](../../datasets/minimercado.sql). El script borra las tablas y las vuelve a crear con los datos originales; al borrarlas, también se eliminan las vistas, índices y triggers que hayas creado durante la [Clase 13](../../notes/semana_7/clase_13.md). Así, todo lo que pide esta tarea se crea desde cero.
 
-> 💡 Usar `ORDER BY` siempre que se pueda.
+> 💡 Después de cada ejercicio, hacer un `SELECT` que muestre que funciona.
 
 ## 📝 Ejercicios
 
-### 🟢 Nivel 1: Consultas básicas
+### 👁️ Vistas
 
-1. Mostrar el nombre y teléfono de todos los proveedores. (`SELECT`, `ORDER BY`)
-2. Listar los productos cuyo precio unitario sea menor a 20, ordenados de menor a mayor precio. (`WHERE`, `ORDER BY`)
-3. Mostrar el nombre completo de los empleados (nombre y apellido concatenados) y su país. (`||`, `ORDER BY`)
-4. Contar la cantidad de productos por categoría. (`COUNT`, `GROUP BY`, `ORDER BY`)
-5. Mostrar los 10 pedidos más antiguos. (`ORDER BY`, `LIMIT`)
+1. Crear `vista_ventas_por_cliente` con: nombre del cliente, cantidad de ventas y total gastado (sumando `cantidad * precio_unitario` de `venta_productos`). Deben aparecer **todos** los clientes, también los que nunca compraron (con 0). Usarla para mostrar los 5 clientes que más gastaron. (`LEFT JOIN`, `COUNT`, `SUM`, `COALESCE`)
+2. Crear `vista_productos_proveedor` con: producto, precio, stock y nombre del proveedor. Usarla para listar los productos de "Lácteos del Valle".
+3. ⭐ Crear la vista materializada `mv_ventas_por_metodo_pago` con: método de pago, cantidad de ventas y total vendido. Insertar una venta nueva, consultar la vista, hacer `REFRESH` y volver a consultarla.
 
-### 🟡 Nivel 2: Filtros y condiciones
+### ⚡ Índices
 
-1. Mostrar los clientes de Francia o Alemania. (`WHERE`, `IN`, `ORDER BY`)
-2. Listar los productos descontinuados y contar cuántos hay por proveedor. (`WHERE`, `COUNT`, `GROUP BY`, `ORDER BY`)
-3. Contar cuántos pedidos se enviaron por mes durante 1997. (`WHERE`, `EXTRACT`, `COUNT`, `GROUP BY`, `ORDER BY`)
+4. Crear un índice para cada foreign key que no tenga uno: `ventas.cliente_id`, `ventas.metodo_pago_id`, `productos.proveedor_id` y `venta_productos.producto_id`. Listarlos con `pg_indexes`.
+5. Repetir la prueba del millón de filas de la clase, pero filtrando por un **rango de fechas** (los últimos 7 días). Ejecutar `EXPLAIN ANALYZE` antes y después de crear un índice sobre `fecha`, y anotar en un comentario los dos tiempos.
 
-### 🔵 Nivel 3: Joins simples y múltiples
+### ⚙️ Funciones y procedimientos
 
-1. Mostrar los productos junto con el nombre de su categoría y el nombre del proveedor. (`INNER JOIN`, `ORDER BY`)
-2. Mostrar los pedidos con el nombre del cliente, el nombre del empleado y la empresa de envío. (`INNER JOIN`, `ORDER BY`)
-3. Mostrar **todos** los clientes y la cantidad de pedidos de cada uno (incluyendo los que no tienen pedidos). (`LEFT JOIN`, `COUNT`, `GROUP BY`, `ORDER BY`)
-4. ⭐ Extra: mostrar el precio promedio de los productos de cada proveedor, con el nombre del proveedor. (`JOIN`, `AVG`, `GROUP BY`, `ORDER BY`)
+6. Crear la función `fn_unidades_vendidas(p_producto_id INT)` que devuelva el total de unidades vendidas de un producto (0 si nunca se vendió). Usarla para listar todos los productos con sus unidades vendidas, de mayor a menor.
+7. Crear el procedimiento `sp_reponer_stock(p_producto_id INT, p_cantidad INT)` que sume `p_cantidad` al stock del producto. Si `p_cantidad` es menor o igual a 0, debe cortar con un error (`RAISE EXCEPTION`). Probarlo con el Jamón Cocido (id 25), que tiene stock 0.
+
+### 🔔 Triggers
+
+8. Crear el trigger `trg_actualizar_total`: después de cada `INSERT` en `venta_productos`, recalcular el `total` de esa venta en `ventas` como la suma de sus líneas. Probarlo creando una venta nueva con 2 productos.
+9. ⭐ Crear el trigger `trg_devolver_stock`: cuando se **borra** una línea de `venta_productos`, devolver esa cantidad al stock del producto. (`AFTER DELETE`, `OLD`)
 
 ## ✅ Entrega
 
-Archivo `.sql` con las 12 consultas, cada una con un comentario indicando nivel y número.
+Archivo `.sql` con todos los ejercicios, cada uno con un comentario indicando su número.

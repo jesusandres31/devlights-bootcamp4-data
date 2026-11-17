@@ -1,12 +1,78 @@
-# Semana 8 · Clase 16 — Dashboard en Metabase
+# Semana 8 · Clase 16 — Metabase: gráficos y dashboard sobre Northwind analítico
 
-> 🎯 **Objetivo:** pasar de consultas sueltas a un **dashboard** en Metabase con pestañas, filtros (variables) y la visualización adecuada para cada pregunta.
+> 🎯 **Objetivo:** conectar **Metabase** al esquema estrella que armamos en la [Clase 15](clase_15.md), crear los primeros gráficos y llegar a un **dashboard** con pestañas, filtros (variables) y la visualización adecuada para cada pregunta.
 >
-> 📝 **Tarea:** [Tarea Clase 16 — Dashboard completo en Metabase](../../tasks/semana_8/clase_16.md)
+> 📝 **Tarea:** [Tarea Clase 16 — Gráficos y dashboard en Metabase](../../tasks/semana_8/clase_16.md)
 
 ---
 
-## 🧩 1. Query vs. gráfico
+## 🧩 1. Levantar Metabase
+
+Agregamos Metabase como un servicio más en el `docker-compose.yml` de la [Clase 8](../../tasks/semana_4/clase_8.md), debajo de `pg_admin`:
+
+```yaml
+  metabase:
+    image: metabase/metabase:latest
+    container_name: my_metabase_bootcamp
+    restart: unless-stopped
+    environment:
+      MB_DB_FILE: /metabase-data/metabase.db   # guarda usuarios, preguntas y dashboards
+    ports:
+      - "4000:3000"
+    volumes:
+      - ./metabase-data:/metabase-data
+    depends_on:
+      - postgres-db
+```
+
+Levantarlo (igual en PowerShell y en bash, desde la carpeta del `docker-compose.yml`):
+
+```bash
+docker compose up -d
+docker ps   # debería aparecer my_metabase_bootcamp
+```
+
+> 💡 La primera vez tarda 1 o 2 minutos en arrancar. Para ver cómo va: `docker logs -f my_metabase_bootcamp` (salir con `Ctrl + C`).
+
+---
+
+## 🧩 2. Conectar Northwind
+
+Entrar a <http://localhost:4000>, crear el usuario admin y agregar la base:
+
+| Campo         | Valor          |
+| ------------- | -------------- |
+| Database type | PostgreSQL     |
+| Host          | `postgres-db`  |
+| Port          | `5432`         |
+| Database name | `northwind`    |
+| Username      | `myuser`       |
+| Password      | `mypassword`   |
+
+> 💡 Igual que pgAdmin, Metabase corre dentro de la misma red de Docker que Postgres: por eso usa el nombre del servicio (`postgres-db`) y el puerto interno `5432`.
+
+En **Browse data → northwind** tienen que aparecer los schemas `public` y `northwind_olap`.
+
+---
+
+## 🧩 3. Primeros gráficos
+
+Cada gráfico es una **SQL question**: **+ New → SQL query**, elegir la base `northwind`, pegar la consulta, ejecutar y elegir la visualización (botón **Visualization**).
+
+Usamos las [consultas analíticas de la Clase 15](clase_15.md#-6-consultas-analíticas):
+
+| #  | Gráfico                         | Visualización        | Eje X / dimensión   | Eje Y / métrica |
+| -- | ------------------------------- | -------------------- | ------------------- | --------------- |
+| a) | Ventas totales por producto     | Row (barras horiz.)  | `product_name`      | `total_sales`   |
+| b) | Ventas por país del cliente     | Map o Bar            | `country`           | `total_sales`   |
+| c) | Ventas por empleado (vendedor)  | Bar                  | `employee_name`     | `total_sales`   |
+| d) | Ventas mensuales                | Line                 | `year` + `month`    | `total_sales`   |
+| e) | Top 10 clientes por ventas      | Row                  | `customer`          | `total_sales`   |
+| f) | Ventas por empresa de envío     | Pie o Bar            | `shipper_name`      | `total_sales`   |
+
+> 💡 Para la línea temporal queda mejor armar una fecha: `MAKE_DATE(d.year, d.month, 1) AS month_start` y agrupar por esa columna.
+
+### Query vs. gráfico
 
 La misma consulta se puede ver como tabla en pgAdmin o como gráfico en Metabase. Primero la probamos en pgAdmin:
 
@@ -51,7 +117,7 @@ ORDER BY total_sales DESC;
 
 ---
 
-## 🧩 2. Estructura del dashboard
+## 🧩 4. Estructura del dashboard
 
 Pestañas (tabs): **KPIs**, **Tendencias**, **Ranking** y **Segmentación**.
 
@@ -78,7 +144,7 @@ ORDER BY category_name;
 
 ---
 
-## 🧩 3. Tab KPIs
+## 🧩 5. Tab KPIs
 
 Visualización: **Number** (un número grande por tarjeta).
 
@@ -111,7 +177,7 @@ WHERE f.order_date BETWEEN {{start_date}} AND {{end_date}};
 
 ---
 
-## 🧩 4. Tab Tendencias
+## 🧩 6. Tab Tendencias
 
 Visualización: **Line** o **Bar**. El `[[ ... ]]` hace que el filtro sea **opcional**: si no se completa, Metabase omite esa parte del `WHERE`.
 
@@ -163,7 +229,7 @@ ORDER BY d.month;
 
 ---
 
-## 🧩 5. Tab Ranking
+## 🧩 7. Tab Ranking
 
 Visualización: **Row** (barras horizontales) o **Table**.
 
@@ -208,7 +274,7 @@ LIMIT 10;
 
 ---
 
-## 🧩 6. Tab Segmentación
+## 🧩 8. Tab Segmentación
 
 ### A) Ventas por país
 
