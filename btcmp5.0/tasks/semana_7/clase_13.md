@@ -10,7 +10,7 @@ Crear vistas, índices, funciones, procedimientos y triggers sobre la base del m
 
 ## 🧱 Preparación
 
-Partir de la base `minimercado` limpia: volver a ejecutar [`datasets/minimercado.sql`](../../datasets/minimercado.sql). El script borra las tablas y las vuelve a crear con los datos originales; al borrarlas, también se eliminan las vistas, índices y triggers que hayas creado durante la [Clase 13](../../notes/semana_7/clase_13.md). Así, todo lo que pide esta tarea se crea desde cero.
+Recrear la base `minimercado` desde cero ejecutando [`datasets/minimercado.sql`](../../datasets/minimercado.sql). El script borra las tablas y las vuelve a crear con los datos originales.
 
 > 💡 Después de cada ejercicio, hacer un `SELECT` que muestre que funciona.
 
@@ -18,24 +18,28 @@ Partir de la base `minimercado` limpia: volver a ejecutar [`datasets/minimercado
 
 ### 👁️ Vistas
 
-1. Crear `vista_ventas_por_cliente` con: nombre del cliente, cantidad de ventas y total gastado (sumando `cantidad * precio_unitario` de `venta_productos`). Deben aparecer **todos** los clientes, también los que nunca compraron (con 0). Usarla para mostrar los 5 clientes que más gastaron. (`LEFT JOIN`, `COUNT`, `SUM`, `COALESCE`)
-2. Crear `vista_productos_proveedor` con: producto, precio, stock y nombre del proveedor. Usarla para listar los productos de "Lácteos del Valle".
-3. ⭐ Crear la vista materializada `mv_ventas_por_metodo_pago` con: método de pago, cantidad de ventas y total vendido. Insertar una venta nueva, consultar la vista, hacer `REFRESH` y volver a consultarla.
+1. Crear la vista `vista_detalle_ventas` con una fila por cada producto vendido: id de la venta, fecha, nombre del cliente, método de pago, producto, proveedor, cantidad, precio unitario y subtotal (`cantidad * precio_unitario`).
+2. Usando `vista_detalle_ventas`:
+   - Mostrar el total gastado por cada cliente, de mayor a menor.
+   - Mostrar los productos más vendidos (unidades), de mayor a menor.
+3. Crear la vista `vista_stock_bajo` con los productos que tienen menos de 10 unidades en stock: id, nombre, stock, nombre del proveedor y teléfono del proveedor. Consultarla ordenada por stock.
+4. ⭐ Crear la vista materializada `mv_ventas_por_mes` con: mes, cantidad de ventas y total vendido. Consultarla, insertar una venta nueva, volver a consultarla (¿cambió?), hacer `REFRESH` y consultarla otra vez.
 
 ### ⚡ Índices
 
-4. Crear un índice para cada foreign key que no tenga uno: `ventas.cliente_id`, `ventas.metodo_pago_id`, `productos.proveedor_id` y `venta_productos.producto_id`. Listarlos con `pg_indexes`.
-5. Repetir la prueba del millón de filas de la clase, pero filtrando por un **rango de fechas** (los últimos 7 días). Ejecutar `EXPLAIN ANALYZE` antes y después de crear un índice sobre `fecha`, y anotar en un comentario los dos tiempos.
+5. Listar los índices que tiene la base consultando `pg_indexes`. ¿Qué columnas ya tienen índice y por qué?
+6. Crear una tabla `prueba_indices` con **1 millón de filas** (`id`, `cliente_id`, `fecha`, `total`) usando `generate_series` y `random()`. Ejecutar `EXPLAIN ANALYZE` de una búsqueda por `cliente_id`, crear un índice sobre esa columna y volver a ejecutarlo. Anotar en un comentario los dos **Execution Time** y el tipo de scan de cada uno. Al terminar, borrar la tabla.
+7. Crear índices en el minimercado para `ventas.cliente_id`, `venta_productos.producto_id` y `ventas.fecha`. Verificar con `pg_indexes` que se hayan creado.
 
 ### ⚙️ Funciones y procedimientos
 
-6. Crear la función `fn_unidades_vendidas(p_producto_id INT)` que devuelva el total de unidades vendidas de un producto (0 si nunca se vendió). Usarla para listar todos los productos con sus unidades vendidas, de mayor a menor.
-7. Crear el procedimiento `sp_reponer_stock(p_producto_id INT, p_cantidad INT)` que sume `p_cantidad` al stock del producto. Si `p_cantidad` es menor o igual a 0, debe cortar con un error (`RAISE EXCEPTION`). Probarlo con el Jamón Cocido (id 25), que tiene stock 0.
+8. Crear la función `fn_total_gastado(p_cliente_id INT)` que devuelva el total gastado por un cliente (sumando `cantidad * precio_unitario` de sus ventas), o 0 si nunca compró. Usarla para listar todos los clientes con su total gastado, de mayor a menor.
+9. Crear el procedimiento `sp_aumentar_precios(p_proveedor_id INT, p_porcentaje NUMERIC)` que aumente en ese porcentaje el precio de todos los productos del proveedor y muestre con `RAISE NOTICE` cuántos productos se actualizaron. Probarlo aumentando 10 % los productos de "Lácteos del Valle" (mostrar los precios antes y después).
 
 ### 🔔 Triggers
 
-8. Crear el trigger `trg_actualizar_total`: después de cada `INSERT` en `venta_productos`, recalcular el `total` de esa venta en `ventas` como la suma de sus líneas. Probarlo creando una venta nueva con 2 productos.
-9. ⭐ Crear el trigger `trg_devolver_stock`: cuando se **borra** una línea de `venta_productos`, devolver esa cantidad al stock del producto. (`AFTER DELETE`, `OLD`)
+10. Crear el trigger `trg_descontar_stock`: después de cada `INSERT` en `venta_productos`, descontar la cantidad vendida del stock del producto. Probarlo creando una venta nueva (usar `RETURNING id` para saber su id) y agregándole la Leche Entera; mostrar el stock antes y después.
+11. Intentar agregar a esa venta el Jamón Cocido, que tiene stock 0. ¿Qué pasa? ¿Se guardó la línea en `venta_productos`? Explicarlo en un comentario.
 
 ## ✅ Entrega
 
