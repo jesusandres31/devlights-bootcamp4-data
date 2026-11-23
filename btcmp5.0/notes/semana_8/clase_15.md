@@ -150,6 +150,8 @@ Antes de escribir SQL, decidimos el modelo respondiendo tres preguntas.
 - **Granularidad** (qué representa cada fila): **una línea de pedido** (un producto dentro de un pedido). Es el nivel más detallado que tenemos; desde ahí se puede sumar a cualquier nivel.
 - **Métricas** (números que se suman): cantidad y monto.
 
+> ⚠️ ¿Y el flete (`orders.freight`)? Es un dato **por pedido**, no por línea. Si lo copiamos en cada línea de `fact_sales` y lo sumamos, lo contamos varias veces. Toda métrica tiene que respetar la granularidad de la tabla de hechos.
+
 ### 🧭 ¿Por qué queremos "cortar" los números? → las **dimensiones**
 
 Cada "por..." de las preguntas es una dimensión: **quién** compra, **qué** se vende, **quién** vende, **cómo** se envía, **cuándo** pasa.
@@ -192,6 +194,8 @@ erDiagram
 
 👉 `dim_product` **desnormaliza**: junta en una sola tabla datos que en Northwind están en `products`, `categories` y `suppliers`.
 
+> 💡 ¿Por qué no meter todo en una sola tabla gigante? Porque `category_name`, `supplier_name`, el país del cliente, etc. se repetirían en cada una de las ~2155 líneas. Separando en dimensiones, la tabla de hechos queda angosta (ids + números) y cada dimensión se puede consultar y filtrar por sí sola.
+
 ---
 
 ## 🧩 3. Preparación: un schema analítico
@@ -201,6 +205,12 @@ Separamos el modelo analítico del transaccional (`public`) en su propio schema:
 ```sql
 CREATE SCHEMA IF NOT EXISTS northwind_olap;
 ```
+
+> 💡 Si algo sale mal y queremos empezar de cero (un CTAS falla con "table already exists" si la tabla ya existe):
+>
+> ```sql
+> DROP SCHEMA IF EXISTS northwind_olap CASCADE;
+> ```
 
 ---
 
@@ -225,6 +235,14 @@ FROM public.order_details od
 JOIN public.orders o ON od.order_id = o.order_id;
 
 SELECT * FROM northwind_olap.fact_sales;
+```
+
+✅ Validamos que el `JOIN` 1:N no perdió ni duplicó filas: las dos cuentas tienen que dar igual (2155).
+
+```sql
+SELECT
+    (SELECT COUNT(*) FROM public.order_details)     AS lineas_origen,
+    (SELECT COUNT(*) FROM northwind_olap.fact_sales) AS lineas_fact;
 ```
 
 > 💡 Un CTAS es "guardar como tabla" el resultado de un `SELECT`: lo mismo que hicimos en la exploración, pero persistido.
@@ -298,13 +316,15 @@ SELECT DISTINCT
     EXTRACT(YEAR FROM order_date)::int    AS year,
     EXTRACT(QUARTER FROM order_date)::int AS quarter,
     EXTRACT(MONTH FROM order_date)::int   AS month,
-    TO_CHAR(order_date, 'Month')          AS month_name,
+    TO_CHAR(order_date, 'FMMonth')        AS month_name,
     EXTRACT(DAY FROM order_date)::int     AS day,
-    EXTRACT(DOW FROM order_date)::int     AS weekday,
-    TO_CHAR(order_date, 'Day')            AS weekday_name
+    EXTRACT(DOW FROM order_date)::int     AS weekday,      -- 0 = domingo ... 6 = sábado
+    TO_CHAR(order_date, 'FMDay')          AS weekday_name
 FROM public.orders
 WHERE order_date IS NOT NULL;
 ```
+
+> 💡 El prefijo `FM` evita que `TO_CHAR` rellene con espacios (sin él, `'Month'` devuelve `'July     '`).
 
 ### ✅ Resultado
 

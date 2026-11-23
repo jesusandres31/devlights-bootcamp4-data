@@ -27,8 +27,9 @@ Tener restaurada la base `northwind` (ver [Tarea Clase 14](../semana_7/clase_14.
 ### 🟡 Nivel 2: Filtros y condiciones
 
 1. Mostrar los clientes de Francia o Alemania. (`WHERE`, `IN`, `ORDER BY`)
-2. Listar los productos descontinuados y contar cuántos hay por proveedor. (`WHERE`, `COUNT`, `GROUP BY`, `ORDER BY`)
-3. Contar cuántos pedidos se enviaron por mes durante 1997. (`WHERE`, `EXTRACT`, `COUNT`, `GROUP BY`, `ORDER BY`)
+2. Contar cuántos productos descontinuados hay por proveedor, mostrando el id del proveedor. (`WHERE`, `COUNT`, `GROUP BY`, `ORDER BY`)
+   > 💡 En Northwind, `discontinued` es un entero: `1` = descontinuado, `0` = no.
+3. Contar cuántos pedidos se enviaron por mes durante 1997, según la fecha de envío (`shipped_date`). (`WHERE`, `EXTRACT`, `COUNT`, `GROUP BY`, `ORDER BY`)
 
 ### 🔵 Nivel 3: Joins simples y múltiples
 
@@ -41,11 +42,12 @@ Tener restaurada la base `northwind` (ver [Tarea Clase 14](../semana_7/clase_14.
 
 1. Crear un **schema nuevo** en tu base `northwind` (distinto de `public`).
 2. Usando **CTAS** (`CREATE TABLE ... AS SELECT`), generar la tabla de hechos y las tablas de dimensiones del esquema estrella.
-3. Las tablas creadas con CTAS no tienen PK ni FK: agregarlas con `ALTER TABLE` (PK en cada dimensión y FK desde `fact_sales` hacia cada una) y compartir una imagen del **DER** de ese schema con la herramienta de pgAdmin (clic derecho sobre la base → **ERD For Database**).
+3. Las tablas creadas con CTAS no tienen PK ni FK: agregarlas con `ALTER TABLE` (PK en cada dimensión y FK desde `fact_sales` hacia cada una) y compartir una imagen del **DER** de ese schema con la herramienta de pgAdmin (clic derecho sobre el schema → **ERD For Schema**; si tu versión no lo tiene, usar **ERD For Database** sobre la base y recortar la parte de tu schema).
 4. Ejecutar las [consultas analíticas](../../notes/semana_8/clase_15.md#-6-consultas-analíticas) de la clase sobre tu schema.
+5. Agregar al modelo **una columna que no esté en la clase** (por ejemplo `units_in_stock` de `products`, `freight` de `orders` o el nombre del jefe de cada empleado). Decidir si va en una dimensión o en la tabla de hechos y **justificarlo en un comentario** en el `.sql` (pensar en la granularidad).
 
 ## ✅ Entrega
 
 - Archivo `.sql` con las 12 consultas de la Parte 1, cada una con un comentario indicando nivel y número.
-- Archivo `.sql` con el `CREATE SCHEMA`, todos los CTAS y los `ALTER TABLE`.
+- Archivo `.sql` con el `CREATE SCHEMA`, todos los CTAS, los `ALTER TABLE` y la columna extra con su justificación.
 - Imagen del DER.
